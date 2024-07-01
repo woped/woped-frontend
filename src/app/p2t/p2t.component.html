@@ -1,54 +1,79 @@
-<!DOCTYPE html>
-<html>
-<div>
+<div class="centered">
+    <!-- Stepper for guiding the user through different steps of the process -->
     <mat-stepper orientation="vertical" #stepperRef>
+        <!-- Step 1: Explanation of P2T -->
         <mat-step>
-            <form>
-                <ng-template matStepLabel>Explanation</ng-template>
-                <p> <b>What is P2T?</b> <br>
-                    The process-to-text approach in the context of Business Process Management
-                    (BPM) and Natural Language Processing (NLP) refers to the automatic generation of text
-                    descriptions
-                    or documentations of business processes. Using BPM techniques and NLP algorithms, process models
-                    can
-                    be analyzed and translated into natural language. This allows the creation of detailed
-                    descriptions
-                    of processes that can be used for various purposes, such as training documentation, user
-                    documentation, or compliance reports.</p>
-            </form>
+            <ng-template matStepLabel>Explanation</ng-template>
+            <p><b>What is P2T?</b> <br>
+                The process-to-text approach in the context of Business Process Management
+                (BPM) and Natural Language Processing (NLP) refers to the automatic generation of text
+                descriptions or documentations of business processes. Using BPM techniques and NLP algorithms,
+                process models
+                can be analyzed and translated into natural language. This allows the creation of detailed
+                descriptions
+                of processes that can be used for various purposes, such as training documentation, user
+                documentation, or compliance reports.
+            </p>
             <button mat-button matStepperNext class="card">Next</button>
         </mat-step>
 
+        <!-- Step 2: Model input and configuration -->
         <mat-step>
-            <form>
-                <ng-template matStepLabel>Insert your Model</ng-template>
-                <p>To upload your process model you can either select your file via a click in the Area in your
-                    explorer or drag and drop it into the right pane.<br></p>
-                <form method="POST Process Modell" enctype="multipart/form-data">
-                    <div class="insertModel">
-                        <div class="dropzone" #dropzoneRef (drop)="onDrop($event)" (dragover)="onDragOver($event)"
-                            (click)="selectFiles()">
-                            <input type="file" style="display: none" #fileInputRef accept=".pnml, .bpmn"
-                                (change)="onFileSelected($event)">
-                            <span *ngIf="isFileDropped">Uploaded file: {{ droppedFileName }}</span>
-                            <span *ngIf="!isFileDropped">Upload files via drag and drop or click into the
-                                textfield</span>
-                        </div>
-                    </div>
-                </form>
-                <button button mat-button matStepperNext class="card" (click)="generateText()">Generate</button>
-            </form>
+            <ng-template matStepLabel>Insert your Model</ng-template>
+            <!-- API key and prompt input fields -->
+            <div *ngIf="showPromptInput" class="centered full-width">
+                <mat-form-field appearance="fill" class="full-width">
+                    <mat-label>API Key</mat-label>
+                    <input matInput [value]="getDisplayApiKey()" readonly (click)="promptForApiKey()" name="apiKey">
+                </mat-form-field>
+                <mat-form-field appearance="fill" class="full-width">
+                    <mat-label>Prompt</mat-label>
+                    <textarea matInput [(ngModel)]="prompt" name="prompt" [readonly]="isPromptReadonly"
+                        cdkTextareaAutosize cdkAutosizeMinRows="4" cdkAutosizeMaxRows="100" (click)="editPrompt()">
+Create a clearly structured and comprehensible continuous text from the given BPMN that is understandable for an uninformed reader. The text should be easy to read in the summary and contain all important content; if there are subdivided points, these are integrated into the text with suitable sentence beginnings in order to obtain a well-structured and easy-to-read text. Under no circumstances should the output contain sub-items or paragraphs, but should cover all processes in one piece!
+                    </textarea>
+                </mat-form-field>
+            </div>
+            <p>To upload your process model you can either select your file via a click in the Area in your
+                explorer or drag and drop it into the right pane.<br></p>
+            <!-- Dropzone for file upload -->
+            <div class="insertModel">
+                <div class="dropzone" #dropzoneRef (drop)="onDrop($event)" (dragover)="onDragOver($event)"
+                    (click)="selectFiles()">
+                    <input type="file" style="display: none" #fileInputRef accept=".pnml, .bpmn"
+                        (change)="onFileSelected($event)">
+                    <span *ngIf="isFileDropped">Uploaded file: {{ droppedFileName }}</span>
+                    <span *ngIf="!isFileDropped">Upload files via drag and drop or click into the textfield</span>
+                </div>
+            </div>
+            <!-- Button to generate text from the process model -->
+            <button mat-button matStepperNext class="card" (click)="generateText()"
+                [disabled]="isGenerateButtonDisabled()">Generate</button>
+            <!-- Toggle switch for selecting between algorithm and LLM, and dropdown for selecting GPT model -->
+            <div class="horizontal-center">
+                <mat-slide-toggle (change)="onToggleChange($event)">{{toggleText}}</mat-slide-toggle>
+                <mat-form-field appearance="fill" class="dropdown-field" *ngIf="isApiKeyEntered">
+                    <mat-label>Select GPT Model</mat-label>
+                    <mat-select [(value)]="selectedModel" (selectionChange)="onModelChange($event.value)">
+                        <mat-option *ngFor="let model of models" [value]="model">{{model}}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
         </mat-step>
 
+        <!-- Step 3: Display the generated text and any errors -->
         <mat-step>
             <ng-template matStepLabel>Text (Done)</ng-template>
             <div id="loading">
-                <mat-spinner [diameter]="100" *ngIf="spinnerService.visibility | async">
-                </mat-spinner>
+                <mat-spinner [diameter]="100" *ngIf="spinnerService.visibility | async"></mat-spinner>
             </div>
-            
+            <div id="error-box" *ngIf="error">
+                <p id="error-content">{{error}}</p>
+            </div>
         </mat-step>
     </mat-stepper>
+
+    <!-- Section to display the user's input and generated text -->
     <div>
         <label><b>Your input: <br></b></label>
         <div id="model-container"></div>
@@ -56,10 +81,4 @@
         <div id="result"></div>
         <button class="card" (click)="downloadText()">Download Text as .txt</button>
     </div>
-
-    <div id="error-box">
-        <p id="error-content"></p>
-    </div>
 </div>
-
-</html>

@@ -10,6 +10,11 @@
       "sourceRoot": "src",
       "prefix": "app",
       "architect": {
+        "serve": {
+          "options": {
+            "proxyConfig": "src/proxy.conf.json"
+          }
+        },
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
@@ -26,7 +31,8 @@
             "buildOptimizer": false,
             "sourceMap": true,
             "optimization": false,
-            "namedChunks": true
+            "namedChunks": true,
+            "allowedCommonJsDependencies": ["vis"]
           },
           "configurations": {
             "production": {
@@ -54,7 +60,8 @@
                   "maximumWarning": "6kb",
                   "maximumError": "10kb"
                 }
-              ]
+              ],
+              "allowedCommonJsDependencies": ["vis"]
             }
           },
           "defaultConfiguration": ""
